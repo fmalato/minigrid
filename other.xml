@@ -1,0 +1,32 @@
+<application>
+  <component name="CvsApplicationLevelConfiguration">
+    <option name="PATH_TO_PASSWORD_FILE" value="$userdir/.cvspass" />
+  </component>
+  <component name="PyTestFrameworkService">
+    <option name="SDK_TO_PYTEST">
+      <map>
+        <entry key="$USER_HOME$/.conda/envs/minigrid/bin/python3.6" value="true" />
+        <entry key="$USER_HOME$/.conda/envs/pg_minigrid/bin/python3.6" value="true" />
+        <entry key="$USER_HOME$/PycharmProjects/ALE_FirstTry/venv/bin/python" value="false" />
+        <entry key="$USER_HOME$/PycharmProjects/minigrid/venv/bin/python" value="false" />
+        <entry key="/usr/bin/python3.6" value="true" />
+      </map>
+    </option>
+    <option name="SDK_TO_NOSETEST">
+      <map>
+        <entry key="$USER_HOME$/.conda/envs/minigrid/bin/python3.6" value="true" />
+        <entry key="$USER_HOME$/.conda/envs/pg_minigrid/bin/python3.6" value="true" />
+        <entry key="$USER_HOME$/PycharmProjects/minigrid/venv/bin/python" value="false" />
+        <entry key="/usr/bin/python3.6" value="false" />
+      </map>
+    </option>
+    <option name="SDK_TO_TRIALTEST">
+      <map>
+        <entry key="$USER_HOME$/.conda/envs/minigrid/bin/python3.6" value="true" />
+        <entry key="$USER_HOME$/.conda/envs/pg_minigrid/bin/python3.6" value="true" />
+        <entry key="$USER_HOME$/PycharmProjects/minigrid/venv/bin/python" value="false" />
+        <entry key="/usr/bin/python3.6" value="false" />
+      </map>
+    </option>
+  </component>
+</application>
