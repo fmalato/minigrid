@@ -115,10 +115,11 @@ if __name__ == '__main__':
     inner_size = 64                       # Number of neurons in two hidden layers.
     lr = 0.001                            # Adam learning rate
     avg_reward = 0.0                      # For tracking average regard per episode.
-    env_name = 'MiniGrid-Empty-8x8-v0'    # Size of the grid
-    task = "task-1"                       # Task name for saving data-task-1 on the right folder
+    env_name = 'MiniGrid-Empty-6x6-v0'    # Size of the grid
+    task = "task-2"                       # Task name for saving data-task-1 on the right folder
     first_write_flag = True               # Need this due to a weird behavior of the library
     training = False                      # If set to False, optimizer won't run (and the net won't learn)
+    plot = False
 
     # Check whether the data directory exists and, if not, create it with all the necessary stuff.
     if not os.path.exists("data-{task}/".format(task=task)):
@@ -145,7 +146,7 @@ if __name__ == '__main__':
     # If there's a previous checkpoint, load this instead of using a new one.
     if os.listdir('torch_models/{env}-{task}/'.format(env=env_name, task=task)):
         policy.load_state_dict(torch.load("torch_models/{env_name}-{task}/model-{env_name}-{step}.pth".format(
-                                                                env_name=env_name, step=last_checkpoint, task=task)))
+            env_name=env_name, step=last_checkpoint, task=task)))
         print("Loaded previous checkpoint at step {step}.".format(step=last_checkpoint))
     else:
         print("Created new policy agent.")
@@ -169,9 +170,10 @@ if __name__ == '__main__':
                 output_reward.write(str(discounted_rewards_np) + "\n")
             avg_reward += np.mean(discounted_rewards)
 
-            if step % 100 == 0 and training:
+            if step % 100 == 0:
                 print('Average reward @ episode {}: {}'.format(step + int(last_checkpoint), avg_reward / 100))
-                if not first_write_flag:
+                print(policy.affine1.weight.data[0])
+                if not first_write_flag and training:
                     output_avg.write(str(avg_reward / 100) + "\n")
                 else:
                     first_write_flag = False
@@ -180,7 +182,7 @@ if __name__ == '__main__':
             # Save the model every 1000 steps
             if step % 500 == 0 and training:
                 torch.save(policy.state_dict(), 'torch_models/{env_name}-{task}/model-{env_name}-{step}.pth'.format(
-                                                        env_name=env_name, task=task, step=step + int(last_checkpoint)))
+                    env_name=env_name, task=task, step=step + int(last_checkpoint)))
                 print("Checkpoint saved.")
 
             # Repeat each action, and backpropagate discounted
@@ -198,7 +200,9 @@ if __name__ == '__main__':
             if training:
                 optimizer.step()
     except KeyboardInterrupt:
-        if training:
-            utils.plot(task, env_name) # TODO: ensure no file has a blank first line. If one has, it's error.
+        if training and plot:
+            utils.plot(task, env_name) # TODO: ensure no file has a blank first line.
+        elif training:
+            print("Training ended.")
         else:
             print("Simulation ended.")

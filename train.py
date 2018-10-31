@@ -1,15 +1,10 @@
 import time
 import gym
-import gym_minigrid
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-import csv
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 from torch.distributions.categorical import Categorical
 from itertools import count
 import utils
@@ -112,7 +107,10 @@ def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0
     except KeyboardInterrupt:
         if training and plot:
             utils.plot(task, env_name)  # TODO: ensure no file has a blank first line. If one has, it's error.
+        elif training:
+            print("Training ended.")
         else:
             print("Simulation ended.")
 
-run(episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=2, training = False)
+run(episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=1, training = True)
+
