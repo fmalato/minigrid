@@ -86,12 +86,26 @@ def read_from_file(filename, separator):
     with open(filename) as file:
         weights = []
         text = file.read()
-        chunk = text.split(separator)
-        print(chunk)
-        weights.append(chunk)
+        chunks = text.split(separator)
+        for idx in range(len(chunks)):
+            weights.append(chunks[idx])
 
     return weights
 
-weights = read_from_file("data-task-2/MiniGrid-Empty-6x6-v0/weights.txt", " ")
-for el in weights:
-    print(str(el) + "\n")
+def generate_dataset(filename, separator):
+
+    data = read_from_file(filename, separator)
+    weights = np.array(np.array([]))
+    for el in data:
+        np.append(weights, el)
+    labels = np.array([])
+    for idx in range(len(weights[0])):      # TODO: fix this, some index is wrong
+        np.append(labels, "label-{idx}".format(idx=idx))
+    # TODO: need to end this
+
+    return weights, labels
+
+
+
+
+

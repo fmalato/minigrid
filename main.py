@@ -198,7 +198,7 @@ if __name__ == '__main__':
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
             if training:
-                episode_weights.write(str(np.asarray(policy.affine1.weight.data[0])) + "\n")
+                episode_weights.write(str(np.asarray(policy.affine1.weight.data[0])) + "~\n")
                 optimizer.step()
     except KeyboardInterrupt:
         if training and plot:
