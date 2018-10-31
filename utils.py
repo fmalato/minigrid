@@ -80,3 +80,18 @@ def plot(task, env_name):
     plt.xlabel("Episode")
     plt.ylabel("Loss per episode")
     plt.show()
+
+def read_from_file(filename, separator):
+
+    with open(filename) as file:
+        weights = []
+        text = file.read()
+        chunk = text.split(separator)
+        print(chunk)
+        weights.append(chunk)
+
+    return weights
+
+weights = read_from_file("data-task-2/MiniGrid-Empty-6x6-v0/weights.txt", " ")
+for el in weights:
+    print(str(el) + "\n")

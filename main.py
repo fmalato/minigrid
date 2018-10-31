@@ -118,7 +118,7 @@ if __name__ == '__main__':
     env_name = 'MiniGrid-Empty-6x6-v0'    # Size of the grid
     task = "task-2"                       # Task name for saving data-task-1 on the right folder
     first_write_flag = True               # Need this due to a weird behavior of the library
-    training = False                      # If set to False, optimizer won't run (and the net won't learn)
+    training = True                       # If set to False, optimizer won't run (and the net won't learn)
     plot = False
 
     # Check whether the data directory exists and, if not, create it with all the necessary stuff.
@@ -131,6 +131,7 @@ if __name__ == '__main__':
     output_reward = open("data-{task}/{env_name}/reward.txt".format(task=task, env_name=env_name), 'a+')
     output_avg = open("data-{task}/{env_name}/avg_reward.txt".format(task=task, env_name=env_name), 'a+')
     output_loss = open("data-{task}/{env_name}/loss.txt".format(task=task, env_name=env_name), 'a+')
+    episode_weights = open("data-{task}/{env_name}/weights.txt".format(task=task, env_name=env_name), 'a+')
 
     # Setup OpenAI Gym environment for guessing game.
     env = gym.make(env_name)
@@ -172,7 +173,6 @@ if __name__ == '__main__':
 
             if step % 100 == 0:
                 print('Average reward @ episode {}: {}'.format(step + int(last_checkpoint), avg_reward / 100))
-                print(policy.affine1.weight.data[0])
                 if not first_write_flag and training:
                     output_avg.write(str(avg_reward / 100) + "\n")
                 else:
@@ -196,8 +196,9 @@ if __name__ == '__main__':
                 loss = -dist.log_prob(actions[step]) * discounted_rewards[step]
                 loss.backward()
                 if step % 100 == 0 & training:
-                    output_loss.write(str(float(loss.data[0])) + "\n")  # TODO: check loss values. Seriously.
+                    output_loss.write(str(float(loss.data[0])) + "\n")
             if training:
+                episode_weights.write(str(np.asarray(policy.affine1.weight.data[0])) + "\n")
                 optimizer.step()
     except KeyboardInterrupt:
         if training and plot:
