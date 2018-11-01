@@ -4,7 +4,7 @@ import gym_minigrid
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-import csv
+import pickle
 
 import torch
 import torch.nn as nn
@@ -131,7 +131,7 @@ if __name__ == '__main__':
     output_reward = open("data-{task}/{env_name}/reward.txt".format(task=task, env_name=env_name), 'a+')
     output_avg = open("data-{task}/{env_name}/avg_reward.txt".format(task=task, env_name=env_name), 'a+')
     output_loss = open("data-{task}/{env_name}/loss.txt".format(task=task, env_name=env_name), 'a+')
-    episode_weights = open("data-{task}/{env_name}/weights.txt".format(task=task, env_name=env_name), 'a+')
+    episode_weights = open("data-{task}/{env_name}/weights.dat".format(task=task, env_name=env_name), 'wb+')
 
     # Setup OpenAI Gym environment for guessing game.
     env = gym.make(env_name)
@@ -198,7 +198,8 @@ if __name__ == '__main__':
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
             if training:
-                episode_weights.write(str(np.asarray(policy.affine1.weight.data[0])) + "~\n")
+                pickle.dump(np.asarray(policy.affine1.weight.data[0]), episode_weights)
+                #episode_weights.write(str(np.asarray(policy.affine1.weight.data[0])) + "~\n")
                 optimizer.step()
     except KeyboardInterrupt:
         if training and plot:
