@@ -13,6 +13,7 @@ import torch.optim as optim
 import torch.autograd as autograd
 from torch.distributions.categorical import Categorical
 from itertools import count
+from copy import deepcopy
 import utils
 import ewc
 
@@ -157,7 +158,6 @@ if __name__ == '__main__':
         with open("data-{task}/{env_name}/FIM.dat".format(task=task, env_name=env_name), 'rb') as f:
             FIM = pickle.load(f)
             policy.set_FIM(FIM)
-            print(policy.FIM)
         print("Loaded previous checkpoint at step {step}.".format(step=last_checkpoint))
         ewc.consolidate(policy, policy.FIM)
     else:
@@ -167,7 +167,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=policy.parameters(), lr=lr)
 
     # Run forever.
-    episodes = 2100
+    episodes = 400
     try:
         for step in range(episodes):
             # MiniGrid has a QT5 renderer which is pretty cool.
@@ -206,7 +206,6 @@ if __name__ == '__main__':
                 logits = policy(states[step])
                 dist = Categorical(logits=logits)
                 loss = -dist.log_prob(actions[step]) * discounted_rewards[step] + ewc.ewc_loss(policy, 2)
-                print(ewc.ewc_loss(policy, 2))
                 loss.backward()
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
@@ -242,8 +241,9 @@ if __name__ == '__main__':
 
     loglikelihoods = torch.cat(log_probs).mean(0)
     loglikelihood_grads = autograd.grad(loglikelihoods, policy.parameters())
-    # TODO: Replace "." with "__" in named_parameters due to register_buffer error
     FIM = {n: g**2 for n, g in zip([n for (n, _) in policy.named_parameters()], loglikelihood_grads)}
+    for (n, _) in policy.named_parameters():
+        FIM[n.replace(".", "__")] = FIM.pop(n)
     with open("data-{task}/{env_name}/FIM.dat".format(task=task, env_name=env_name), 'wb+') as f:
         pickle.dump(FIM, f)
         print("File dumped correctly.")

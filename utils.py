@@ -5,6 +5,9 @@ import csv
 import matplotlib.pyplot as plt
 import pickle
 
+
+# Search for the last checkpoint inside the current environment's models directory by scanning the
+# number at the end of the file name. Store all the numbers in an array and return the argmax.
 def search_last_model(path, env_name, task):
 
     checkpoints = []
@@ -28,6 +31,7 @@ def search_last_model(path, env_name, task):
 
     return max_arg
 
+# Provide a way to know how many lines a file has.
 def file_len(fname):
 
     with open(fname) as f:
@@ -36,6 +40,7 @@ def file_len(fname):
             pass
     return i + 1
 
+# Plot all the important stuff like loss, episode reward and average reward
 def plot(task, env_name):
 
     avg_len = file_len("data-{task}/{env_name}/avg_reward.txt".format(task=task, env_name=env_name))
