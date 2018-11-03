@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import torch.autograd as autograd
 from torch.distributions.categorical import Categorical
 from itertools import count
 import utils
@@ -42,11 +43,16 @@ class Policy(nn.Module):
         self.saved_log_probs = []
         self.rewards = []
 
+        self.FIM = {}
+
     def forward(self, x):
         x = x.view(-1, 7*7)
         x = F.relu(self.affine1(x))
         act_probs = self.affine2(x).clamp(-1000.0, +1000.0)
         return act_probs
+
+    def set_FIM(self, FIM):
+        self.FIM = FIM
 
 # Function that, given a policy network and a state selects a random
 # action according to the probabilities output by final layer.
@@ -116,7 +122,7 @@ if __name__ == '__main__':
     lr = 0.001                            # Adam learning rate
     avg_reward = 0.0                      # For tracking average regard per episode.
     env_name = 'MiniGrid-Empty-6x6-v0'    # Size of the grid
-    task = "task-2"                       # Task name for saving data-task-1 on the right folder
+    task = "task-1"                       # Task name for saving data-task-1 on the right folder
     first_write_flag = True               # Need this due to a weird behavior of the library
     training = True                       # If set to False, optimizer won't run (and the net won't learn)
     plot = False
@@ -131,7 +137,6 @@ if __name__ == '__main__':
     output_reward = open("data-{task}/{env_name}/reward.txt".format(task=task, env_name=env_name), 'a+')
     output_avg = open("data-{task}/{env_name}/avg_reward.txt".format(task=task, env_name=env_name), 'a+')
     output_loss = open("data-{task}/{env_name}/loss.txt".format(task=task, env_name=env_name), 'a+')
-    episode_weights = open("data-{task}/{env_name}/weights.dat".format(task=task, env_name=env_name), 'wb+')
 
     # Setup OpenAI Gym environment for guessing game.
     env = gym.make(env_name)
@@ -148,6 +153,10 @@ if __name__ == '__main__':
     if os.listdir('torch_models/{env}-{task}/'.format(env=env_name, task=task)):
         policy.load_state_dict(torch.load("torch_models/{env_name}-{task}/model-{env_name}-{step}.pth".format(
             env_name=env_name, step=last_checkpoint, task=task)))
+        with open("data-{task}/{env_name}/FIM.dat".format(task=task, env_name=env_name), 'rb') as f:
+            FIM = pickle.load(f)
+            policy.set_FIM(FIM)
+            print(policy.FIM)
         print("Loaded previous checkpoint at step {step}.".format(step=last_checkpoint))
     else:
         print("Created new policy agent.")
@@ -156,8 +165,9 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=policy.parameters(), lr=lr)
 
     # Run forever.
+    episodes = 2100
     try:
-        for step in count():
+        for step in range(episodes):
             # MiniGrid has a QT5 renderer which is pretty cool.
             env.render('human')
             time.sleep(0.01)
@@ -198,8 +208,6 @@ if __name__ == '__main__':
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
             if training:
-                pickle.dump(np.asarray(policy.affine1.weight.data[0]), episode_weights)
-                #episode_weights.write(str(np.asarray(policy.affine1.weight.data[0])) + "~\n")
                 optimizer.step()
     except KeyboardInterrupt:
         if training and plot:
@@ -208,3 +216,31 @@ if __name__ == '__main__':
             print("Training ended.")
         else:
             print("Simulation ended.")
+
+    # Now estimate the diagonal FIM.
+    print('Estimating diagonal FIM...')
+    episodes = 1000
+    log_probs = []
+    for step in range(episodes):
+        # Run an episode.
+        (states, actions, discounted_rewards) = run_episode(env, policy, episode_len)
+        avg_reward += np.mean(discounted_rewards)
+        if step % 100 == 0:
+            print('Average reward @ episode {}: {}'.format(step, avg_reward / 100))
+            avg_reward = 0.0
+
+        # Repeat each action, and backpropagate discounted
+        # rewards. This can probably be batched for efficiency with a
+        # memoryless agent...
+        for (step, a) in enumerate(actions):
+            logits = policy(states[step])
+            dist = Categorical(logits=logits)
+            log_probs.append(-dist.log_prob(actions[step]) * discounted_rewards[step])
+
+    loglikelihoods = torch.cat(log_probs).mean(0)
+    loglikelihood_grads = autograd.grad(loglikelihoods, policy.parameters())
+    FIM = {n: g**2 for n, g in zip([n for (n, _) in policy.named_parameters()], loglikelihood_grads)}
+    with open("data-{task}/{env_name}/FIM.dat".format(task=task, env_name=env_name), 'wb+') as f:
+        pickle.dump(FIM, f)
+        print("File dumped correctly.")
+

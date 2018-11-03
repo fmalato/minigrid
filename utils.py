@@ -82,44 +82,6 @@ def plot(task, env_name):
     plt.ylabel("Loss per episode")
     plt.show()
 
-def read_from_file(filename):
-
-    with open(filename, 'rb') as file:
-        weights = []
-        for _ in range(3):
-            weights.append(pickle.load(file))
-        """for el in text:
-            weights.append(el)"""
-    print(weights)
-    return weights
-
-def generate_dataset(filepath):
-
-    data = read_from_file(filepath)
-    weights = []
-    for el in data:
-        weights.append(el)
-    labels = []
-
-    for idx in range(len(weights)):      # TODO: fix this, some index is wrong
-        labels.append("label-{idx}".format(idx=idx))
-    # TODO: need to end this
-
-    return weights, labels
-
-"""weights, labels = generate_dataset("data-task-2/MiniGrid-Empty-6x6-v0/weights.dat")
-print(weights)
-print(labels)"""
-
-"""print("ciao")
-with open("prova.dat", 'wb') as f:
-    pickle.dump([1, 2, 3], f)
-    pickle.dump([4, 5, 6], f)
-with open("prova.dat", 'rb') as f:
-    x1 = pickle.load(f)
-    x2 = pickle.load(f)
-print(x1)
-print(x2)"""
 
 
 

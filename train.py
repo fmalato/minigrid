@@ -10,8 +10,8 @@ from itertools import count
 import utils
 import main
 
-def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0', task='task-1', training=False,
-        goal_pos=1, plot=False):
+def run(episodes=2100, episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0',
+        task='task-1',training=False, goal_pos=1, plot=False):
 
     episode_len = episode_len            # Length of each game.
     obs_size = 7 * 7                     # MiniGrid uses a 7x7 window of visibility.
@@ -62,7 +62,7 @@ def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0
 
     # Run forever.
     try:
-        for step in count():
+        for step in range(episodes):
             # MiniGrid has a QT5 renderer which is pretty cool.
             env.render('human')
             time.sleep(0.01)
@@ -112,5 +112,5 @@ def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0
         else:
             print("Simulation ended.")
 
-run(episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=1, training = True)
+run(episodes=2100, episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=1, training = True)
 
