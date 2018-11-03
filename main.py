@@ -14,6 +14,7 @@ import torch.autograd as autograd
 from torch.distributions.categorical import Categorical
 from itertools import count
 import utils
+import ewc
 
 # A simple, memoryless MLP agent. Last layer are logits (scores for
 # which higher values represent preferred actions).
@@ -158,6 +159,7 @@ if __name__ == '__main__':
             policy.set_FIM(FIM)
             print(policy.FIM)
         print("Loaded previous checkpoint at step {step}.".format(step=last_checkpoint))
+        ewc.consolidate(policy, policy.FIM)
     else:
         print("Created new policy agent.")
 
@@ -203,7 +205,8 @@ if __name__ == '__main__':
             for (step, a) in enumerate(actions):
                 logits = policy(states[step])
                 dist = Categorical(logits=logits)
-                loss = -dist.log_prob(actions[step]) * discounted_rewards[step]
+                loss = -dist.log_prob(actions[step]) * discounted_rewards[step] + ewc.ewc_loss(policy, 2)
+                print(ewc.ewc_loss(policy, 2))
                 loss.backward()
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
@@ -239,6 +242,7 @@ if __name__ == '__main__':
 
     loglikelihoods = torch.cat(log_probs).mean(0)
     loglikelihood_grads = autograd.grad(loglikelihoods, policy.parameters())
+    # TODO: Replace "." with "__" in named_parameters due to register_buffer error
     FIM = {n: g**2 for n, g in zip([n for (n, _) in policy.named_parameters()], loglikelihood_grads)}
     with open("data-{task}/{env_name}/FIM.dat".format(task=task, env_name=env_name), 'wb+') as f:
         pickle.dump(FIM, f)

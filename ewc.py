@@ -5,12 +5,14 @@ from torch.autograd import Variable as V
 import torch.utils.data
 
 def consolidate(model, fisher):
+    print("Consolidating named_parameters.")
     for n, p in model.named_parameters():
         n = n.replace('.', '__')
         model.register_buffer('{}_estimated_mean'.format(n), p.data.clone())
-        model.register_buffer('{}_estimated_fisher'.format(n), fisher[n].data)
+        model.register_buffer('{}_estimated_fisher'.format(n), fisher[n].data)#TODO: Crash has to do with fisher[n].data
+    print("Parameters consolidated.")
 
-def ewc_loss(model, importance, cuda=False):
+def ewc_loss(model, importance):
     try:
         losses = []
         for n, p in model.named_parameters():
