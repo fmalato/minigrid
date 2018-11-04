@@ -11,25 +11,30 @@ import pickle
 def search_last_model(path, env_name, task):
 
     checkpoints = []
+    try:
+        if not os.path.exists("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task)):
+            print("Directory for {env}-{task} models not found: a new one has been created.".format(env=env_name,
+                                                                                                    task=task))
+            os.makedirs("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
+            return 0
 
-    if not os.path.exists("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task)):
+        # Execute this line only if there's a directory
+        file_list = os.listdir("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
+
+        for fname in file_list:
+            res = re.findall("{env}-(\d+).pth".format(env=env_name), fname)
+            checkpoints.append(res[0])
+
+        checkpoints_np = np.asarray(checkpoints, dtype=int)
+        max_index = checkpoints_np.argmax()
+        max_arg = checkpoints_np[max_index]
+
+        return max_arg
+    except ValueError:
         print("Directory for {env}-{task} models not found: a new one has been created.".format(env=env_name,
                                                                                                 task=task))
         os.makedirs("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
         return 0
-
-    # Execute this line only if there's a directory
-    file_list = os.listdir("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
-
-    for fname in file_list:
-        res = re.findall("{env}-(\d+).pth".format(env=env_name), fname)
-        checkpoints.append(res[0])
-
-    checkpoints_np = np.asarray(checkpoints, dtype=int)
-    max_index = checkpoints_np.argmax()
-    max_arg = checkpoints_np[max_index]
-
-    return max_arg
 
 # Provide a way to know how many lines a file has.
 def file_len(fname):
