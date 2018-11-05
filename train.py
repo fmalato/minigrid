@@ -1,22 +1,17 @@
 import time
 import gym
-import gym_minigrid
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-import csv
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
 from torch.distributions.categorical import Categorical
 from itertools import count
 import utils
 import main
 
-def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0', task='task-1', training=False,
-        goal_pos=1, plot=False):
+def run(episodes=2100, episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0',
+        task='task-1',training=False, goal_pos=1, plot=False):
 
     episode_len = episode_len            # Length of each game.
     obs_size = 7 * 7                     # MiniGrid uses a 7x7 window of visibility.
@@ -67,7 +62,7 @@ def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0
 
     # Run forever.
     try:
-        for step in count():
+        for step in range(episodes):
             # MiniGrid has a QT5 renderer which is pretty cool.
             env.render('human')
             time.sleep(0.01)
@@ -112,7 +107,10 @@ def run(episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0
     except KeyboardInterrupt:
         if training and plot:
             utils.plot(task, env_name)  # TODO: ensure no file has a blank first line. If one has, it's error.
+        elif training:
+            print("Training ended.")
         else:
             print("Simulation ended.")
 
-run(episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=2, training = False)
+run(episodes=2100, episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=1, training = True)
+

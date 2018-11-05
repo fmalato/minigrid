@@ -3,30 +3,40 @@ import re
 import numpy as np
 import csv
 import matplotlib.pyplot as plt
+import pickle
 
+
+# Search for the last checkpoint inside the current environment's models directory by scanning the
+# number at the end of the file name. Store all the numbers in an array and return the argmax.
 def search_last_model(path, env_name, task):
 
     checkpoints = []
+    try:
+        if not os.path.exists("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task)):
+            print("Directory for {env}-{task} models not found: a new one has been created.".format(env=env_name,
+                                                                                                    task=task))
+            os.makedirs("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
+            return 0
 
-    if not os.path.exists("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task)):
+        # Execute this line only if there's a directory
+        file_list = os.listdir("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
+
+        for fname in file_list:
+            res = re.findall("{env}-(\d+).pth".format(env=env_name), fname)
+            checkpoints.append(res[0])
+
+        checkpoints_np = np.asarray(checkpoints, dtype=int)
+        max_index = checkpoints_np.argmax()
+        max_arg = checkpoints_np[max_index]
+
+        return max_arg
+    except ValueError:
         print("Directory for {env}-{task} models not found: a new one has been created.".format(env=env_name,
                                                                                                 task=task))
         os.makedirs("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
         return 0
 
-    # Execute this line only if there's a directory
-    file_list = os.listdir("{path}{env_name}-{task}/".format(path=path, env_name=env_name, task=task))
-
-    for fname in file_list:
-        res = re.findall("{env}-(\d+).pth".format(env=env_name), fname)
-        checkpoints.append(res[0])
-
-    checkpoints_np = np.asarray(checkpoints, dtype=int)
-    max_index = checkpoints_np.argmax()
-    max_arg = checkpoints_np[max_index]
-
-    return max_arg
-
+# Provide a way to know how many lines a file has.
 def file_len(fname):
 
     with open(fname) as f:
@@ -35,6 +45,7 @@ def file_len(fname):
             pass
     return i + 1
 
+# Plot all the important stuff like loss, episode reward and average reward
 def plot(task, env_name):
 
     avg_len = file_len("data-{task}/{env_name}/avg_reward.txt".format(task=task, env_name=env_name))
@@ -80,3 +91,10 @@ def plot(task, env_name):
     plt.xlabel("Episode")
     plt.ylabel("Loss per episode")
     plt.show()
+
+
+
+
+
+
+
