@@ -123,12 +123,12 @@ if __name__ == '__main__':
     inner_size = 64                       # Number of neurons in two hidden layers.
     lr = 0.001                            # Adam learning rate
     avg_reward = 0.0                      # For tracking average regard per episode.
-    env_name = 'MiniGrid-Empty-6x6-v0'    # Size of the grid
+    env_name = 'MiniGrid-Empty-8x8-v0'    # Size of the grid
     task = "task-1"                       # Task name for saving data-task-1 on the right folder
     first_write_flag = True               # Need this due to a weird behavior of the library
-    training = True                      # If set to False, optimizer won't run (and the net won't learn)
+    training = False                       # If set to False, optimizer won't run (and the net won't learn)
     plot = False                          # If true, plots all the important stuff
-    need_FIM = True                      # Avoid the FIM calculus if not required
+    need_FIM = False                      # Avoid the FIM calculus if not required
     goal_pos = 1                          # Change the goal square position
 
     # Check whether the data directory exists and, if not, create it with all the necessary stuff.
@@ -162,7 +162,7 @@ if __name__ == '__main__':
             FIM = pickle.load(f)
             policy.set_FIM(FIM)
         print("Loaded previous checkpoint at step {step}.".format(step=last_checkpoint))
-        ewc.consolidate(policy, policy.FIM) # TODO: fix this error: consolidating parameters renames named_params
+        #ewc.consolidate(policy, policy.FIM) # TODO: fix this error: consolidating parameters renames named_params
     else:
         print("Created new policy agent.")
 
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=policy.parameters(), lr=lr)
 
     # Run forever.
-    episodes = 1100
+    episodes = 2100
     try:
         for step in range(episodes):
             # MiniGrid has a QT5 renderer which is pretty cool.
@@ -208,7 +208,7 @@ if __name__ == '__main__':
             for (step, a) in enumerate(actions):
                 logits = policy(states[step])
                 dist = Categorical(logits=logits)
-                loss = -dist.log_prob(actions[step]) * discounted_rewards[step] + ewc.ewc_loss(policy, 2)
+                loss = -dist.log_prob(actions[step]) * discounted_rewards[step] #+ ewc.ewc_loss(policy, 2)
                 loss.backward()
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
