@@ -126,7 +126,7 @@ if __name__ == '__main__':
     env_name = 'MiniGrid-Empty-8x8-v0'    # Size of the grid
     task = "task-1"                       # Task name for saving data-task-1 on the right folder
     first_write_flag = True               # Need this due to a weird behavior of the library
-    training = False                       # If set to False, optimizer won't run (and the net won't learn)
+    training = False                      # If set to False, optimizer won't run (and the net won't learn)
     plot = False                          # If true, plots all the important stuff
     need_FIM = False                      # Avoid the FIM calculus if not required
     goal_pos = 1                          # Change the goal square position
@@ -170,7 +170,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(params=policy.parameters(), lr=lr)
 
     # Run forever.
-    episodes = 2100
+    episodes = 200
     try:
         for step in range(episodes):
             # MiniGrid has a QT5 renderer which is pretty cool.
@@ -205,19 +205,25 @@ if __name__ == '__main__':
             # memoryless agent...
             if training:
                 optimizer.zero_grad()
+            episode_loss = []
             for (step, a) in enumerate(actions):
                 logits = policy(states[step])
                 dist = Categorical(logits=logits)
+                # Provare vari valori di importance
                 loss = -dist.log_prob(actions[step]) * discounted_rewards[step] #+ ewc.ewc_loss(policy, 2)
                 loss.backward()
+                # TODO: Sommare la loss per ciascuna mossa e salvare la loss per episodio dividendo per i passi
+                # dell'episodio
+                episode_loss.append(loss.data[0])
                 if step % 100 == 0 & training:
                     output_loss.write(str(float(loss.data[0])) + "\n")
             if training:
                 optimizer.step()
+            current_loss = sum([x for x in episode_loss]) / episode_len
     except KeyboardInterrupt:
-        if training and plot:
-            utils.plot(task, env_name) # TODO: ensure no file has a blank first line.
-        elif training:
+        if plot:
+            utils.plot(task, env_name)
+        elif training and not plot:
             print("Training ended.")
         else:
             print("Simulation ended.")
@@ -245,10 +251,15 @@ if __name__ == '__main__':
 
         loglikelihoods = torch.cat(log_probs).mean(0)
         loglikelihood_grads = autograd.grad(loglikelihoods, policy.parameters())
+        # torch.dot(loglikelihood_grads * loglikelihood_grads.T)
         FIM = {n: g**2 for n, g in zip([n for (n, _) in policy.named_parameters()], loglikelihood_grads)}
         for (n, _) in policy.named_parameters():
             FIM[n.replace(".", "__")] = FIM.pop(n)
         with open("data-{task}/{env_name}/FIM.dat".format(task=task, env_name=env_name), 'wb+') as f:
             pickle.dump(FIM, f)
             print("File dumped correctly.")
+
+    utils.non_diagonal_FIM(policy, env, episode_len, env_name, task)
+
+
 
