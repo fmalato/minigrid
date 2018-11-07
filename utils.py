@@ -5,6 +5,11 @@ import csv
 import matplotlib.pyplot as plt
 import pickle
 
+import torch
+import torch.autograd as autograd
+from torch.distributions.categorical import Categorical
+
+import main
 
 # Search for the last checkpoint inside the current environment's models directory by scanning the
 # number at the end of the file name. Store all the numbers in an array and return the argmax.
@@ -92,7 +97,35 @@ def plot(task, env_name):
     plt.ylabel("Loss per episode")
     plt.show()
 
+def non_diagonal_FIM(agent, env, episode_len, env_name, task):
+    print('Estimating non-diagonal FIM...')
+    episodes = 1000
+    log_probs = []
+    avg_reward = 0.0
+    for step in range(episodes):
+        # Run an episode.
+        (states, actions, discounted_rewards) = main.run_episode(env, agent, episode_len)
+        avg_reward += np.mean(discounted_rewards)
+        if step % 100 == 0:
+            print('Average reward @ episode {}: {}'.format(step, avg_reward / 100))
+            avg_reward = 0.0
 
+        # Repeat each action, and backpropagate discounted
+        # rewards. This can probably be batched for efficiency with a
+        # memoryless agent...
+        for (step, a) in enumerate(actions):
+            logits = agent(states[step])
+            dist = Categorical(logits=logits)
+            log_probs.append(-dist.log_prob(actions[step]) * discounted_rewards[step])
+
+    loglikelihoods = torch.cat(log_probs).mean(0)
+    loglikelihood_grads = autograd.grad(loglikelihoods, agent.parameters())
+    loglike_list = [x for x in loglikelihood_grads]
+    # TODO: understand what's inside loglikelihood and why there are tensors with different size
+    FIM = [torch.mm(x, x.t()) for x in loglike_list]
+    with open("data-{task}/{env_name}/nonD_FIM.dat".format(task=task, env_name=env_name), 'wb+') as f:
+        pickle.dump(FIM, f)
+        print("File dumped correctly.")
 
 
 
