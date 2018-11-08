@@ -74,22 +74,33 @@ def plot(model_name):
     with open("data-{model}/loss.txt".format(model=model_name)) as f_loss:
         data_loss = f_loss.readlines()
     loss = csv.reader(data_loss)
-    with open("data-{model}/reward.txt".format(model=model_name)) as f_rew:
-        data_rew = f_rew.readlines()
-    rew = csv.reader(data_rew)
 
     for n in list(rewards):
         avg_d.append(float(n[0]))
     for n in list(loss):
         loss_d.append(float(n[0]))
-    """for n in list(rew):
-        rew_d.append(float(n[0]))"""    # TODO: data are saved in a strange format, need to check it before plotting
 
+    avg_loss = []
+    curr_loss = 0
+    for x in range(len(loss_d)):
+        curr_loss += curr_loss
+        if x % 100 == 0 and x is not 0:
+            avg_loss.append(curr_loss)
+            curr_loss = 0
+
+    avg_loss.pop(40)
+
+    plt.title(model_name)
     plt.plot(avg_x, avg_d)
     plt.xlabel("Episode")
     plt.ylabel("Average reward")
-    plt.show()
-    # plt.plot(rew_x, rew_d)
+
+    plt.title(model_name)
+    plt.plot(avg_x, avg_loss)
+    plt.xlabel("Episode")
+    plt.ylabel("Average Loss")
+
+    plt.title(model_name)
     plt.plot(loss_x, loss_d)
     plt.xlabel("Episode")
     plt.ylabel("Loss per episode")
@@ -160,6 +171,15 @@ def diagonal_FIM(agent, env, episode_len, model_name):
         print("File dumped correctly.")
 
 
+def test_plot(model_name):
+
+    y_axis = []
+
+    with open("data-{model}/test_avg_rewards.txt".format(model=model_name)) as file:
+        test_data = file.readlines()
+    t_d = csv.reader(test_data)
+    for n in list(t_d):
+        y_axis.append(float(n[0]))
 
 
 

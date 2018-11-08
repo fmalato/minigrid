@@ -11,7 +11,7 @@ def consolidate(model, fisher):
     for n, p in model.named_parameters():
         n = n.replace('.', '__')
         model.register_buffer('{}_estimated_mean'.format(n), p.data.clone())
-        model.register_buffer('{}_estimated_fisher'.format(n), fisher[n].data)#TODO: Crash has to do with fisher[n].data
+        model.register_buffer('{}_estimated_fisher'.format(n), fisher[n].data)
     print("Parameters consolidated.")
 
 # Calculate the ewc loss, which has to be added to the current task loss. If one or more
