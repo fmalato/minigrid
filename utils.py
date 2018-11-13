@@ -4,12 +4,14 @@ import numpy as np
 import csv
 import matplotlib.pyplot as plt
 import pickle
+from PIL import Image
 
 import torch
 import torch.autograd as autograd
 from torch.distributions.categorical import Categorical
 
-import main
+import network
+
 
 # Search for the last checkpoint inside the current environment's models directory by scanning the
 # number at the end of the file name. Store all the numbers in an array and return the argmax.
@@ -39,6 +41,7 @@ def search_last_model(path, model_name):
         os.makedirs("{path}{model}/".format(path=path, model=model_name))
         return 0
 
+
 # Provide a way to know how many lines a file has.
 def file_len(fname):
 
@@ -48,63 +51,6 @@ def file_len(fname):
             pass
     return i + 1
 
-# Plot all the important stuff like loss, episode reward and average reward
-def plot(model_name):
-
-    avg_len = file_len("data-{model}/avg_reward.txt".format(model=model_name))
-    rew_len = file_len("data-{model}/reward.txt".format(model=model_name))
-    loss_len = file_len("data-{model}/loss.txt".format(model=model_name))
-    avg_x = []
-    rew_x = []
-    loss_x = []
-    avg_d = []
-    rew_d = []
-    loss_d = []
-    checkpoint = search_last_model("torch_models/", model_name)
-
-    for y in range(avg_len):
-        avg_x.append(y * 100)
-    for y in range(rew_len):
-        rew_x.append(y)
-    for y in range(loss_len):
-        loss_x.append(y)
-    with open("data-{model}/avg_reward.txt".format(model=model_name)) as file:
-        data_avg_reward = file.readlines()
-    rewards = csv.reader(data_avg_reward)
-    with open("data-{model}/loss.txt".format(model=model_name)) as f_loss:
-        data_loss = f_loss.readlines()
-    loss = csv.reader(data_loss)
-
-    for n in list(rewards):
-        avg_d.append(float(n[0]))
-    for n in list(loss):
-        loss_d.append(float(n[0]))
-
-    avg_loss = []
-    curr_loss = 0
-    for x in range(len(loss_d)):
-        curr_loss += curr_loss
-        if x % 100 == 0 and x is not 0:
-            avg_loss.append(curr_loss)
-            curr_loss = 0
-
-    avg_loss.pop(40)
-
-    plt.title(model_name)
-    plt.plot(avg_x, avg_d)
-    plt.xlabel("Episode")
-    plt.ylabel("Average reward")
-
-    plt.title(model_name)
-    plt.plot(avg_x, avg_loss)
-    plt.xlabel("Episode")
-    plt.ylabel("Average Loss")
-
-    plt.title(model_name)
-    plt.plot(loss_x, loss_d)
-    plt.xlabel("Episode")
-    plt.ylabel("Loss per episode")
-    plt.show()
 
 def non_diagonal_FIM(agent, env, episode_len, model_name):
     print('Estimating non-diagonal FIM...')
@@ -113,7 +59,7 @@ def non_diagonal_FIM(agent, env, episode_len, model_name):
     avg_reward = 0.0
     for step in range(episodes):
         # Run an episode.
-        (states, actions, discounted_rewards) = main.run_episode(env, agent, episode_len)
+        (states, actions, discounted_rewards) = network.run_episode(env, agent, episode_len)
         avg_reward += np.mean(discounted_rewards)
         if step % 100 == 0:
             print('Average reward @ episode {}: {}'.format(step, avg_reward / 100))
@@ -140,13 +86,14 @@ def non_diagonal_FIM(agent, env, episode_len, model_name):
         pickle.dump(FIM, f)
         print("File dumped correctly.")
 
+
 def diagonal_FIM(agent, env, episode_len, model_name):
     print('Estimating diagonal FIM...')
     episodes = 1000
     log_probs = []
     for step in range(episodes):
         # Run an episode.
-        (states, actions, discounted_rewards) = main.run_episode(env, agent, episode_len)
+        (states, actions, discounted_rewards) = network.run_episode(env, agent, episode_len)
         avg_reward += np.mean(discounted_rewards)
         if step % 100 == 0:
             print('Average reward @ episode {}: {}'.format(step, avg_reward / 100))
@@ -171,15 +118,81 @@ def diagonal_FIM(agent, env, episode_len, model_name):
         print("File dumped correctly.")
 
 
-def test_plot(model_name):
+def test_plot():
 
+    x_axis = np.arange(0, 4000, 100)
     y_axis = []
+    models = ['EWC_model_diag_FIM', 'EWC_model_nondiag_FIM', 'non_EWC_model']
+    y_data = []
 
-    with open("data-{model}/test_avg_rewards.txt".format(model=model_name)) as file:
-        test_data = file.readlines()
-    t_d = csv.reader(test_data)
-    for n in list(t_d):
-        y_axis.append(float(n[0]))
+    for model_name in models:
+        with open("data-{model}/avg_reward.txt".format(model=model_name)) as file:
+            test_data = file.readlines()
+        t_d = csv.reader(test_data)
+        for n in list(t_d):
+            y_axis.append(float(n[0]))
+        with open("data-{model}/test_avg_rewards.txt".format(model=model_name)) as file:
+            test_data = file.readlines()
+        t_d = csv.reader(test_data)
+        for n in list(t_d):
+            y_axis.append(float(n[0]))
+        y_data.append(y_axis)
+        y_axis = []
+    for el in y_data:
+        plt.ylabel("Ricompensa media")
+        plt.xlabel("Episodio")
+        plt.plot(x_axis, el)
+    plt.title('Comparazione dei modelli')
+    plt.legend(('EWC con FIM diagonale', 'EWC con FIM non diagonale', 'senza EWC'))
+    # plt.savefig('images/training_comparison.png')
+    plt.show()
+
+
+def loss_plot():
+
+    x_axis = np.arange(0, 4200, 1)
+    y_axis = []
+    models = ['EWC_model_diag_FIM', 'EWC_model_nondiag_FIM', 'non_EWC_model']
+    y_data = []
+
+    for model_name in models:
+        with open("data-{model}/loss.txt".format(model=model_name)) as file:
+            test_data = file.readlines()
+        t_d = csv.reader(test_data)
+        for n in list(t_d):
+            y_axis.append(float(n[0]))
+        y_data.append(y_axis)
+        y_axis = []
+    for el in y_data:
+        plt.ylabel("Loss")
+        plt.xlabel("Episodio")
+        plt.plot(x_axis, el)
+    plt.title('Comparazione dei modelli')
+    plt.legend(('EWC con FIM diagonale', 'EWC con FIM non diagonale', 'senza EWC'))
+    # plt.savefig('images/loss_comparison.png')
+    plt.show()
+
+
+def FIM_to_image(filepath):
+
+    with open(filepath, 'rb') as f:
+        FIM = pickle.load(f)
+        labels = ['affine1_weight', 'affine2_weight']
+        correct_FIM = {label: x for label, x in zip(labels, [FIM[y] for y in labels])} # TODO: what's this?!
+    FIM_list = [[]]
+    col = 0
+    for key in FIM.keys():
+        for item in FIM[key]:
+            for el in item.data:
+                x = float(el)
+                FIM_list[col].append(x)
+        col += 1
+    array = np.fromiter(FIM_list, dtype=float)
+    img = Image.fromarray(array, 'RGB')
+    img.save('my.png')
+    img.show()
+
+FIM_to_image('data-EWC_model_diag_FIM/FIM.dat')
 
 
 

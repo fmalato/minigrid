@@ -8,8 +8,8 @@ from torch.distributions.categorical import Categorical
 
 import utils
 import ewc
-from main import Policy
-from main import run_episode
+from network import Policy
+from network import run_episode
 
 def test(model_name, goal_pos=1, EWC_flag=True):
 
@@ -20,7 +20,7 @@ def test(model_name, goal_pos=1, EWC_flag=True):
     avg_reward = 0.0                      # For tracking average regard per episode.
     env_name = 'MiniGrid-Empty-8x8-v0'    # Size of the grid
 
-    test_avg_reward = open("data-{model}/test_avg_rewards.txt".format(model=model_name), 'a+')
+    #test_avg_reward = open("data-{model}/test_avg_rewards.txt".format(model=model_name), 'a+')
 
     # Setup OpenAI Gym environment for guessing game.
     env = gym.make(env_name)
@@ -60,8 +60,8 @@ def test(model_name, goal_pos=1, EWC_flag=True):
 
         if step % 100 == 0:
             print('Average reward @ episode {}: {}'.format(step + int(last_checkpoint), avg_reward / 100))
-            if step != 0:
-                test_avg_reward.write(str(avg_reward / 100) + "\n")
+            #if step != 0:
+                #test_avg_reward.write(str(avg_reward / 100) + "\n")
             avg_reward = 0.0
 
 def complete_test_cycle(model_name, EWC_flag):
@@ -76,3 +76,4 @@ def complete_test_cycle(model_name, EWC_flag):
 
 complete_test_cycle("EWC_model_diag_FIM", True)
 complete_test_cycle("EWC_model_nondiag_FIM", True)
+complete_test_cycle("non_EWC_model", False)
