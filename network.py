@@ -69,7 +69,7 @@ def select_action(policy, state):
 # objects (including goal) with integers. This function just strips
 # out the first channel and returns it.
 def state_filter(state):
-    return torch.from_numpy(state['images'][:,:,0]).float()
+    return torch.from_numpy(state['image'][:,:,0]).float()
 
 # Function to compute discounted rewards after a complete episode.
 def compute_discounted_rewards(rewards, gamma=0.99):
