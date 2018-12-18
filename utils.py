@@ -91,6 +91,7 @@ def diagonal_FIM(agent, env, episode_len, model_name):
     print('Estimating diagonal FIM...')
     episodes = 1000
     log_probs = []
+    avg_reward = 0.0
     for step in range(episodes):
         # Run an episode.
         (states, actions, discounted_rewards) = network.run_episode(env, agent, episode_len)
@@ -120,7 +121,7 @@ def diagonal_FIM(agent, env, episode_len, model_name):
 
 def test_plot():
 
-    x_axis = np.arange(0, 4000, 100)
+    x_axis = np.arange(0, 6000, 100)
     y_axis = []
     models = ['EWC_model_diag_FIM', 'EWC_model_nondiag_FIM', 'non_EWC_model']
     y_data = []
@@ -131,20 +132,25 @@ def test_plot():
         t_d = csv.reader(test_data)
         for n in list(t_d):
             y_axis.append(float(n[0]))
-        with open("data-{model}/test_avg_rewards.txt".format(model=model_name)) as file:
-            test_data = file.readlines()
-        t_d = csv.reader(test_data)
-        for n in list(t_d):
-            y_axis.append(float(n[0]))
         y_data.append(y_axis)
         y_axis = []
-    for el in y_data:
+
+        with open("data-{model}/test_avg_rewards.txt".format(model=model_name)) as file:
+            test_data = file.readlines()
+        t_n = csv.reader(test_data)
+        for d in list(t_n):
+            y_axis.append(float(d[0]))
+        y_data.append(y_axis)
+        y_axis = []
+    for num in range(0, 5, 2):
+        y_axis.append([*y_data[num], *y_data[num+1]])
+    for el in y_axis:
         plt.ylabel("Ricompensa media")
         plt.xlabel("Episodio")
         plt.plot(x_axis, el)
-    plt.title('Comparazione dei modelli')
-    plt.legend(('EWC con FIM diagonale', 'EWC con FIM non diagonale', 'senza EWC'))
-    # plt.savefig('images/training_comparison.png')
+    plt.title('Confronto tra modelli')
+    plt.legend(('EWC con FIM diagonale', 'EWC con FIM non diagonale', 'senza EWC'), loc=2, prop={'size': 5})
+    plt.savefig('images/complete_comparison_test.png')
     plt.show()
 
 
@@ -173,7 +179,7 @@ def loss_plot():
     plt.show()
 
 
-def FIM_to_image(filepath):
+def FIM_to_image(filepath):     # Perhaps not needed
 
     with open(filepath, 'rb') as f:
         FIM = pickle.load(f)
@@ -192,7 +198,5 @@ def FIM_to_image(filepath):
     img.save('my.png')
     img.show()
 
-FIM_to_image('data-EWC_model_diag_FIM/FIM.dat')
 
-
-
+test_plot()

@@ -12,16 +12,16 @@ import utils
 import network
 from network import Policy
 
-def run(episodes=2100, episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0',
-        task='task-1',training=False, goal_pos=1, plot=False):
+def run(episodes=1600, episode_len=50, inner_size=64, lr=0.001, env_name='MiniGrid-Empty-8x8-v0',
+         training=False, goal_pos=1):
 
     obs_size = 7*7                        # MiniGrid uses a 7x7 window of visibility.
     act_size = 7                          # Seven possible actions (turn left, right, forward, pickup, drop, etc.)
     avg_reward = 0.0                      # For tracking average regard per episode.
     first_write_flag = True               # Need this due to a weird behavior of the library
-    need_diag_FIM = False                 # Avoid the FIM calculus if not required
-    need_nondiag_FIM = True               # Same as above but with non diagonal FIM
-    model_name = "EWC_model_nondiag_FIM"  # Retrieve the correct model if it exists
+    need_diag_FIM = True                 # Avoid the FIM calculus if not required
+    need_nondiag_FIM = False              # Same as above but with non diagonal FIM
+    model_name = "EWC_model_diag_FIM_3_tasks"  # Retrieve the correct model if it exists
     EWC_flag = True                       # If true, uses ewc_loss
 
     if not EWC_flag:
@@ -39,8 +39,11 @@ def run(episodes=2100, episode_len=50, inner_size=64, lr=0.001, env_name='MiniGr
     # Setup OpenAI Gym environment for guessing game.
     env = gym.make(env_name)
     if goal_pos == 2:
-        env.set_posX(4)
+        env.set_posX(2)
         env.set_posY(5)
+    elif goal_pos == 3:
+        env.set_posX(5)
+        env.set_posY(2)
 
     # Check the model directory
     last_checkpoint = utils.search_last_model('torch_models/', model_name)
@@ -129,5 +132,6 @@ def run(episodes=2100, episode_len=50, inner_size=64, lr=0.001, env_name='MiniGr
     elif need_nondiag_FIM:
         utils.non_diagonal_FIM(policy, env, episode_len, model_name)
 
-run(episodes=2100, episode_len=50, task='task-2', env_name='MiniGrid-Empty-8x8-v0', goal_pos=1, training = True)
+
+#run(episodes=1600, episode_len=50, env_name='MiniGrid-Empty-8x8-v0', goal_pos=3, training = False)
 
